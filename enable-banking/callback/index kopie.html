@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+  <title>Return to LifeOS</title>
+  <style>
+    :root { color-scheme: light dark; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+    body { max-width: 34rem; margin: 15vh auto; padding: 1.5rem; line-height: 1.5; }
+    a { display: inline-block; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Returning to LifeOS</h1>
+  <p id="status">LifeOS Server should open automatically.</p>
+  <a id="retry" hidden>Open LifeOS Server</a>
+  <script>
+    (() => {
+      'use strict';
+      const incoming = new URLSearchParams(window.location.search);
+      const allowedNames = ['code', 'state', 'error', 'error_description'];
+      const forwarded = new URLSearchParams();
+
+      for (const name of allowedNames) {
+        const value = incoming.get(name);
+        if (value !== null && value.length > 0 && value.length <= 4096) {
+          forwarded.set(name, value);
+        }
+      }
+
+      history.replaceState(null, '', window.location.pathname);
+      window.opener = null;
+
+      const hasState = forwarded.has('state');
+      const hasResult = forwarded.has('code') || forwarded.has('error');
+      if (!hasState || !hasResult) {
+        document.getElementById('status').textContent =
+          'This authorization response is incomplete. Return to LifeOS Server and start again.';
+        return;
+      }
+
+      const callback = `lifeos-server://enable-banking/callback?${forwarded.toString()}`;
+      const retry = document.getElementById('retry');
+      retry.href = callback;
+      retry.hidden = false;
+      window.location.replace(callback);
+    })();
+  </script>
+</body>
+</html>
